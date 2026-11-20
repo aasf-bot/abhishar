@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import TypePanel from './TypePanel';
 import { typePanels, otherArtForms } from '../content';
 
-const PANEL_COLORS = ['#F7CF45', '#4FB0BA', '#D9CC9B', '#E2674A'];
+const PANEL_COLORS = ['#5E1F23', '#22403C', '#1C2748', '#7E5A1E'];
 
 export default function TypesSection() {
   const [activeChip, setActiveChip] = useState<string | null>(null);
@@ -12,11 +13,9 @@ export default function TypesSection() {
   const [brushDrawn, setBrushDrawn] = useState(false);
   const chipRowRef = useRef<HTMLDivElement>(null);
   const brushRef = useRef<SVGPathElement>(null);
-  const reducedMotion = useRef(false);
-
-  useEffect(() => {
-    reducedMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }, []);
+  const prefersReduced = useReducedMotion() ?? false;
+  const reducedMotion = useRef(prefersReduced);
+  useEffect(() => { reducedMotion.current = prefersReduced; }, [prefersReduced]);
 
   // Intersection observer for chips + brush underline
   useEffect(() => {
@@ -53,7 +52,7 @@ export default function TypesSection() {
   const activeNote = otherArtForms.find((f) => f.label === activeChip)?.note;
 
   return (
-    <section id="types" className="relative">
+    <section id="types" className="relative" style={{ background: 'var(--canvas)' }}>
       {/* Stacking panels */}
       <div className="relative">
         {typePanels.map((panel, i) => (
@@ -64,19 +63,20 @@ export default function TypesSection() {
       {/* ---- Chip row ---- */}
       <div
         ref={chipRowRef}
-        className="bg-[#F8F1DC] relative z-10 section-pad"
+        className="surface-canvas relative z-10 section-pad"
+        style={{ borderRadius: '28px 28px 0 0', boxShadow: '0 -20px 50px rgba(0,0,0,0.3)', marginTop: -28 }}
       >
         <div className="site-container">
           {/* Heading with brush underline */}
           <div style={{ textAlign: 'center', marginBottom: 'var(--heading-to-chips)' }}>
             <h3
-              className="text-xl md:text-2xl font-bold text-[#17140F]"
-              style={{ fontFamily: 'var(--font-display)', display: 'inline-block', position: 'relative' }}
+              className="display-md text-[#1C1712]"
+              style={{ display: 'inline-block', position: 'relative', fontStyle: 'italic', fontWeight: 500 }}
             >
               More art forms to explore
               {/* Hand-drawn brush underline */}
               <svg
-                className="absolute -bottom-2 left-0 w-full h-3 pointer-events-none"
+                className="absolute -bottom-3 left-0 w-full h-3 pointer-events-none"
                 viewBox="0 0 300 12"
                 preserveAspectRatio="none"
                 aria-hidden="true"
@@ -85,7 +85,7 @@ export default function TypesSection() {
                   ref={brushRef}
                   d="M2 8 Q40 2 80 7 Q120 12 160 6 Q200 1 240 7 Q270 11 298 5"
                   fill="none"
-                  stroke="#E2674A"
+                  stroke="#B8893B"
                   strokeWidth="3"
                   strokeLinecap="round"
                   opacity="0.7"
@@ -103,25 +103,26 @@ export default function TypesSection() {
               const isActive = activeChip === form.label;
               const hoverColor = PANEL_COLORS[i % PANEL_COLORS.length];
               // Stagger delay: 60ms per chip, or instant with reduced motion
-              const delay = reducedMotion.current ? 0 : i * 0.06;
+              const delay = prefersReduced ? 0 : i * 0.06;
 
               return (
                 <button
                   key={form.label}
                   onClick={() => setActiveChip(isActive ? null : form.label)}
-                  className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25356B] cursor-pointer"
+                  className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B8893B] cursor-pointer"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '10px 20px',
+                    padding: '11px 22px',
                     borderRadius: '999px',
-                    border: isActive ? `1.5px solid ${hoverColor}` : '1.5px solid rgba(23,20,15,0.18)',
-                    backgroundColor: isActive ? hoverColor : '#F8F1DC',
-                    color: isActive
-                      ? (['#F7CF45', '#D9CC9B'].includes(hoverColor) ? '#17140F' : '#FFFFFF')
-                      : '#17140F',
-                    fontSize: '0.875rem',
+                    border: isActive ? `1px solid ${hoverColor}` : '1px solid rgba(126,90,30,0.35)',
+                    backgroundColor: isActive ? hoverColor : 'rgba(251,247,238,0.7)',
+                    boxShadow: isActive ? '0 10px 24px -10px rgba(0,0,0,0.45)' : '0 1px 0 rgba(255,255,255,0.8) inset',
+                    color: isActive ? '#FFF8E8' : '#1C1712',
+                    fontFamily: 'var(--font-display)',
+                    fontStyle: 'italic',
+                    fontSize: '1rem',
                     fontWeight: 500,
                     whiteSpace: 'nowrap',
                     transition: 'all 0.25s ease',
@@ -133,16 +134,16 @@ export default function TypesSection() {
                   onMouseEnter={(e) => {
                     if (!isActive) {
                       const el = e.currentTarget;
-                      el.style.backgroundColor = hoverColor + '18';
+                      el.style.backgroundColor = hoverColor + '14';
                       el.style.borderColor = hoverColor;
-                      el.style.transform = 'translateY(-2px)';
+                      el.style.transform = 'translateY(-3px)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
                       const el = e.currentTarget;
-                      el.style.backgroundColor = '#F8F1DC';
-                      el.style.borderColor = 'rgba(23,20,15,0.18)';
+                      el.style.backgroundColor = 'rgba(251,247,238,0.7)';
+                      el.style.borderColor = 'rgba(126,90,30,0.35)';
                       el.style.transform = 'translateY(0)';
                     }
                   }}
@@ -160,20 +161,24 @@ export default function TypesSection() {
           </div>
 
           {/* Note card */}
-          <div className="mt-6 flex justify-center" style={{ minHeight: '60px' }}>
+          <div className="mt-8 flex justify-center" style={{ minHeight: '96px' }}>
             {activeNote && (
               <div
                 key={activeChip}
-                className="w-full bg-white/60 backdrop-blur-sm rounded-xl border border-[#17140F]/8 text-center"
+                className="w-full rounded-sm text-center relative"
+
                 style={{
                   maxWidth: '640px',
                   marginLeft: 'auto',
                   marginRight: 'auto',
-                  padding: '1.25rem 1.5rem',
-                  animation: reducedMotion.current ? 'none' : 'chipNoteIn 0.35s ease-out both',
+                  padding: '1.5rem 1.75rem',
+                  background: 'var(--paper)',
+                  border: '1px solid rgba(184,137,59,0.45)',
+                  boxShadow: '0 20px 40px -24px rgba(60,40,10,0.5), inset 0 0 0 5px var(--paper), inset 0 0 0 6px rgba(184,137,59,0.3)',
+                  animation: prefersReduced ? 'none' : 'chipNoteIn 0.35s ease-out both',
                 }}
               >
-                <p className="text-[#17140F]/70 text-sm leading-relaxed">{activeNote}</p>
+                <p className="text-[#1C1712]/80 text-base md:text-lg leading-relaxed" style={{ fontFamily: 'var(--font-display)' }}>{activeNote}</p>
               </div>
             )}
           </div>

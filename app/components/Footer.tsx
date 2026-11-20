@@ -34,14 +34,14 @@ export default function Footer() {
   return (
     <footer
       id="footer"
-      className="wavy-top relative bg-[#101426] text-white/80 pt-20 pb-10"
+      className="wavy-top relative surface-gallery text-white/80 pt-20 pb-10"
     >
       <div className="site-container">
         {/* Top row */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-10 mb-12">
           {/* Logo + Title */}
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 flex items-center justify-center bg-white/5">
+            <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center" style={{ padding: 2, background: 'var(--gold-gradient)' }}>
               <Image
                 src={siteConfig.logoPath}
                 alt="AASF Logo"
@@ -52,12 +52,12 @@ export default function Footer() {
             </div>
             <div>
               <h3
-                className="text-xl font-bold text-white tracking-wide"
+                className="text-2xl text-white"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 {siteConfig.name}
               </h3>
-              <p className="text-sm text-white/50">{siteConfig.themeTitle}</p>
+              <p className="text-sm italic text-[#E6C77F]/80" style={{ fontFamily: 'var(--font-display)' }}>{siteConfig.themeTitle}</p>
             </div>
           </div>
 
@@ -67,7 +67,7 @@ export default function Footer() {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm text-white/60 hover:text-[#F7CF45] transition-colors"
+                className="text-xs uppercase tracking-[0.2em] text-white/60 hover:text-[#E6C77F] transition-colors"
               >
                 {link.label}
               </a>
@@ -76,7 +76,7 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="w-full h-px bg-white/10 mb-8" />
+        <div className="w-full h-px mb-8" style={{ background: 'linear-gradient(90deg, transparent, rgba(230,199,127,0.5), transparent)' }} />
 
         {/* Bottom row */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -88,9 +88,8 @@ export default function Footer() {
               <a
                 key={social.label}
                 href={social.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-[#F7CF45] hover:border-[#F7CF45]/30 transition-all duration-300"
+                {...(social.url.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-[#1C1712] hover:bg-[#E6C77F] hover:border-[#E6C77F] hover:-translate-y-1 transition-all duration-300"
                 aria-label={social.label}
               >
                 {socialIcons[social.icon]}

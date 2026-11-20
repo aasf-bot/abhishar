@@ -17,6 +17,19 @@
 
 ## Recent Changes
 
+### 2026-11-20: Gallery redesign ("museum" art theme)
+
+All text content and section order unchanged. Visual + animation overhaul:
+- **Root-cause fix:** the unlayered `* { margin:0; padding:0 }` reset in `globals.css` overrode every Tailwind spacing utility (Tailwind v4 utilities live in `@layer utilities`; unlayered CSS always wins). Reset moved into `@layer base`, so Tailwind classes work again.
+- Type: Playfair Display (display, italic accents) + Outfit (body). Gallery palette (oxblood, verdigris, ultramarine, umber, gold); animated canvas-grain overlay; gilded-frame utility.
+- New high-res public-domain artwork in `public/images/art/` (Met Museum Open Access CC0 + Wikimedia PD-art): hero = Hokusai, Raja Ravi Varma, Bruegel, Van Gogh, F. E. Church; panels = Vermeer, Carpeaux, Unicorn Tapestry, Ravenna mosaic. Credits shown on-page (`artist` / `artwork` fields in `content.ts`).
+- Hero: letter-mask wordmark reveal, scroll parallax, museum "Now viewing" label, CSS fallback image while the canvas preloads.
+- Type panels: museum "rooms" with Roman numerals, framed art + labels, parallax; sticky `top` is measured so panels taller than the viewport scroll fully before pinning (previously the next panel covered their artwork on phones/short laptops).
+- Featured: velvet-curtain reveal, picture lights, 3D tilt, brass plaques. Lifescape: framed cards, snap scroll, progress rail, gilded lightbox.
+- Video poster extracted with ffmpeg (`public/images/video-poster.jpg`).
+- Bug fixes: header active link never cleared; paint cursor created DOM nodes every 50ms forever; `#` social links opened blank tabs; refs read during render (lint errors); dev badge hidden (`devIndicators: false`).
+- Playwright verified at 360/390/768/1024/1280/1440/1920/2560: no horizontal scroll, no console errors, every panel artwork visible.
+
 ### 2026-11-19: Featured Articles — 3 frames with real content
 
 - Added third frame (feature-03.png, wheat field with cypress trees) with Delft-blue lacquer + gold inner line ornament

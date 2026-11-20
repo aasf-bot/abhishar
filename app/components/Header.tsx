@@ -9,50 +9,48 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
-  const [, setScrollProgress] = useState(0);
 
-  // Scroll listener for sticky header + progress bar
+  // One rAF-throttled scroll handler: sticky header, progress bar, active section.
+  // (Previously an IntersectionObserver set the active link but never cleared it,
+  // so "About" stayed highlighted after scrolling back up.)
   useEffect(() => {
-    const handleScroll = () => {
+    const ids = navLinks.map((l) => l.href.replace('#', ''));
+    let ticking = false;
+    const update = () => {
+      ticking = false;
       const y = window.scrollY;
       setScrolled(y > 80);
-
-      // Update scroll progress
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       const progress = docHeight > 0 ? Math.min(y / docHeight, 1) : 0;
-      setScrollProgress(progress);
       document.documentElement.style.setProperty('--scroll-progress', String(progress));
+
+      const probe = window.innerHeight * 0.4;
+      let current = '';
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        if (r.top <= probe && r.bottom > probe) current = id;
+      }
+      setActiveSection(current);
     };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, []);
 
-  // IntersectionObserver for active section tracking
+  // Lock page scroll while the mobile menu is open
   useEffect(() => {
-    const sectionIds = navLinks.map((l) => l.href.replace('#', ''));
-    const observers: IntersectionObserver[] = [];
-
-    sectionIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setActiveSection(id);
-          }
-        },
-        { rootMargin: '-40% 0px -40% 0px', threshold: 0 }
-      );
-
-      observer.observe(el);
-      observers.push(observer);
-    });
-
-    return () => observers.forEach((o) => o.disconnect());
-  }, []);
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
 
   const handleNavClick = useCallback(
     (href: string) => {
@@ -74,8 +72,8 @@ export default function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
           scrolled
-            ? 'bg-[#F8F1DC]/95 backdrop-blur-md shadow-sm'
-            : 'bg-transparent'
+            ? 'bg-[#F4ECDB]/90 backdrop-blur-md shadow-[0_1px_0_rgba(184,137,59,0.35),0_10px_30px_-15px_rgba(0,0,0,0.25)]'
+            : 'bg-gradient-to-b from-black/40 to-transparent'
         }`}
       >
         <div className="site-container flex items-center justify-between h-16 md:h-[72px]">
@@ -92,9 +90,8 @@ export default function Header() {
               }}
             >
               <div
-                className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 transition-colors duration-300 ${
-                  scrolled ? 'border-[#17140F]/20' : 'border-white/30'
-                }`}
+                className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center transition-transform duration-500 hover:rotate-[360deg]"
+                style={{ padding: 2, background: 'var(--gold-gradient)' }}
               >
                 <Image
                   src={siteConfig.logoPath}
@@ -105,6 +102,12 @@ export default function Header() {
                   priority
                 />
               </div>
+              <span
+                className="hidden sm:inline text-lg tracking-wide transition-colors duration-300"
+                style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: scrolled ? 'var(--color-ink)' : '#FFF8E8' }}
+              >
+                {siteConfig.name}
+              </span>
             </a>
 
             {/* Hamburger */}
@@ -131,15 +134,16 @@ export default function Header() {
                 <button
                   key={link.href}
                   onClick={() => handleNavClick(link.href)}
-                  className={`relative px-3 py-2 text-sm font-medium tracking-wide transition-colors duration-300 ${
-                    scrolled ? 'text-[#17140F]' : 'text-white'
-                  } hover:text-[#E2674A]`}
+                  className={`relative px-3 py-2 text-[13px] uppercase font-medium tracking-[0.14em] transition-colors duration-300 cursor-pointer ${
+                    scrolled ? 'text-[#1C1712]' : 'text-white/90'
+                  } ${scrolled ? 'hover:text-[#5E1F23]' : 'hover:text-[#E6C77F]'}`}
                 >
                   {link.label}
                   {isActive && (
                     <motion.div
                       layoutId="activeNav"
-                      className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#E2674A] rounded-full"
+                      className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                      style={{ background: 'var(--gold-gradient)' }}
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
                   )}
@@ -150,11 +154,12 @@ export default function Header() {
             {/* CTA Button */}
             <button
               onClick={() => handleNavClick(ctaLink.href)}
-              className={`ml-4 px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
+              className={`shimmer ml-3 px-6 py-2.5 text-[13px] uppercase tracking-[0.12em] font-semibold rounded-full transition-all duration-300 cursor-pointer hover:-translate-y-0.5 ${
                 scrolled
-                  ? 'bg-[#E2674A] text-white hover:bg-[#c9553d]'
-                  : 'bg-white/15 text-white border border-white/30 hover:bg-white/25 backdrop-blur-sm'
+                  ? 'text-[#1C1712] shadow-[0_6px_20px_-8px_rgba(126,90,30,0.8)]'
+                  : 'text-[#1C1712]'
               }`}
+              style={{ background: 'var(--gold-gradient)' }}
             >
               {ctaLink.label}
             </button>
@@ -170,7 +175,7 @@ export default function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[99] bg-[#101426]/97 backdrop-blur-lg flex flex-col items-center justify-center"
+            className="fixed inset-0 z-[99] surface-gallery flex flex-col items-center justify-center"
           >
             {/* Close button */}
             <button
@@ -194,10 +199,10 @@ export default function Header() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08, duration: 0.5 }}
                     onClick={() => handleNavClick(link.href)}
-                    className={`text-3xl font-light tracking-wider transition-colors ${
-                      isActive ? 'text-[#F7CF45]' : 'text-white/80 hover:text-white'
+                    className={`text-4xl italic transition-colors ${
+                      isActive ? 'text-[#E6C77F]' : 'text-white/85 hover:text-white'
                     }`}
-                    style={{ fontFamily: 'var(--font-body)' }}
+                    style={{ fontFamily: 'var(--font-display)' }}
                   >
                     {link.label}
                   </motion.button>
@@ -209,7 +214,8 @@ export default function Header() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: navLinks.length * 0.08, duration: 0.5 }}
                 onClick={() => handleNavClick(ctaLink.href)}
-                className="mt-4 px-8 py-3 bg-[#E2674A] text-white text-lg font-semibold rounded-full hover:bg-[#c9553d] transition-colors"
+                className="mt-6 px-9 py-3.5 text-[#1C1712] text-base uppercase tracking-[0.12em] font-semibold rounded-full"
+                style={{ background: 'var(--gold-gradient)' }}
               >
                 {ctaLink.label}
               </motion.button>

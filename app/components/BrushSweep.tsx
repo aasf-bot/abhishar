@@ -7,6 +7,7 @@ interface HeroSlide {
   src: string;
   alt: string;
   label: string;
+  artist?: string;
   focalPoint: { x: number; y: number };
 }
 
@@ -59,10 +60,10 @@ export default function BrushSweep({ slides, onSlideChange }: BrushSweepProps) {
 
     // Preload all images into HTMLImageElement array
     let loadCount = 0;
-    loadedImgs.current = slides.map((s, i) => {
+    loadedImgs.current = slides.map((s) => {
       const img = new window.Image();
+      img.decoding = 'async';
       img.src = s.src;
-      img.crossOrigin = 'anonymous';
       img.decode().then(() => {
         loadCount++;
         if (loadCount === numSlides) {
@@ -93,6 +94,7 @@ export default function BrushSweep({ slides, onSlideChange }: BrushSweepProps) {
 
     function initAfterLoad() {
       resizeCanvas();
+      canvas!.style.opacity = '1';
       drawCurrentFrame();
       onChangeRef.current?.(stackRef.current[stackRef.current.length - 1]);
       schedule();
@@ -243,8 +245,6 @@ export default function BrushSweep({ slides, onSlideChange }: BrushSweepProps) {
           onUpdate: () => {
             const topIdx = stack[stack.length - 1];
             const belowIdx = stack[stack.length - 2];
-            const cw = container!.clientWidth;
-            const ch = container!.clientHeight;
             // Draw below fully
             drawImageCover(loadedImgs.current[belowIdx], slides[belowIdx].focalPoint.x, slides[belowIdx].focalPoint.y, 1);
             // Draw top with fading opacity
@@ -269,9 +269,6 @@ export default function BrushSweep({ slides, onSlideChange }: BrushSweepProps) {
       // Set up band progress
       const numBands = getNumBands();
       bandProgress.current = new Array(numBands).fill(0);
-
-      // Freeze zoom at current value during sweep
-      const sweepZoom = zoomRef.current;
 
       const tl = gsap.timeline({
         onUpdate: () => drawCurrentFrame(),
@@ -376,10 +373,22 @@ export default function BrushSweep({ slides, onSlideChange }: BrushSweepProps) {
       style={{ zIndex: 0 }}
     >
       {/* Canvas renders the image stack + eraser animation */}
+      {/* First painting as an instant CSS fallback while the canvas preloads */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${slides[0].src})`,
+          backgroundSize: 'cover',
+          backgroundPosition: `${slides[0].focalPoint.x}% ${slides[0].focalPoint.y}%`,
+        }}
+        aria-hidden="true"
+      />
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full"
-        style={{ display: 'block' }}
+        style={{ display: 'block', opacity: 0, transition: 'opacity 0.8s ease' }}
+        role="img"
+        aria-label={slides.map((s) => s.alt).join('; ')}
       />
 
       {/* Brush graphic + paint streak */}
@@ -402,18 +411,32 @@ export default function BrushSweep({ slides, onSlideChange }: BrushSweepProps) {
             right: '100%',
             top: '50%',
             transform: 'translateY(-50%)',
-            width: '90px',
-            height: '3px',
-            background: 'linear-gradient(to left, #E2674A, transparent)',
+            width: '140px',
+            height: '10px',
+            background: 'linear-gradient(to left, rgba(230,199,127,0.9), rgba(194,70,46,0.5) 40%, transparent)',
             opacity: 0,
-            borderRadius: '2px',
+            borderRadius: '6px',
+            filter: 'blur(2px)',
           }}
         />
-        <svg width="60" height="30" viewBox="0 0 60 30" fill="none" className="drop-shadow-lg">
-          <rect x="0" y="8" width="35" height="14" rx="3" fill="#8B6914" />
-          <rect x="35" y="6" width="6" height="18" rx="1" fill="#C0C0C0" />
-          <path d="M41 6 Q50 0 58 8 Q60 15 58 22 Q50 30 41 24 Z" fill="#E2674A" opacity="0.9" />
-          <circle cx="55" cy="20" r="3" fill="#E2674A" opacity="0.6" />
+        <svg width="110" height="34" viewBox="0 0 110 34" fill="none" style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.5))' }}>
+          <defs>
+            <linearGradient id="bs-handle" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#7A2A22" />
+              <stop offset="0.5" stopColor="#A63A2C" />
+              <stop offset="1" stopColor="#4E1915" />
+            </linearGradient>
+            <linearGradient id="bs-ferrule" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#7E5A1E" />
+              <stop offset="0.35" stopColor="#F3DFA6" />
+              <stop offset="0.7" stopColor="#B8893B" />
+              <stop offset="1" stopColor="#7E5A1E" />
+            </linearGradient>
+          </defs>
+          <path d="M0 14 Q2 11 8 11.5 L58 13 L58 21 L8 22.5 Q2 23 0 20 Z" fill="url(#bs-handle)" />
+          <rect x="58" y="10" width="18" height="14" rx="2" fill="url(#bs-ferrule)" />
+          <path d="M76 10 Q92 8 104 14 Q109 17 104 20 Q92 26 76 24 Z" fill="#2B1D12" />
+          <path d="M92 13 Q102 15 108 17 Q102 19 92 21 Z" fill="#C2462E" />
         </svg>
       </div>
 

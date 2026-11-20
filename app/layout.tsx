@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { Archivo_Black, Outfit } from 'next/font/google';
+import { Playfair_Display, Outfit } from 'next/font/google';
 import './globals.css';
 
-const archivoBlack = Archivo_Black({
-  weight: '400',
+const playfair = Playfair_Display({
   subsets: ['latin'],
-  variable: '--font-archivo-black',
+  style: ['normal', 'italic'],
+  variable: '--font-playfair',
   display: 'swap',
 });
 
@@ -49,9 +49,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${archivoBlack.variable} ${outfit.variable}`}
+      className={`${playfair.variable} ${outfit.variable}`}
     >
       <body className="min-h-screen antialiased">
+        <div className="grain" aria-hidden="true" />
         {children}
       </body>
     </html>

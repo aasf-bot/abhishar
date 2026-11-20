@@ -1,30 +1,16 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { videoSection, flipbookSection, downloadSection } from '../content';
+import Reveal, { SectionHeading } from './Reveal';
 
-interface Props {}
-
-export default function VideoFlipbookDownload(_props?: Props) {
+export default function VideoFlipbookDownload() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [revealed, setRevealed] = useState(false);
   const [videoStarted, setVideoStarted] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeError, setIframeError] = useState(false);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setRevealed(true); },
-      { threshold: 0.15 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
 
   // Robust video error detection
   useEffect(() => {
@@ -78,30 +64,20 @@ export default function VideoFlipbookDownload(_props?: Props) {
     <section
       id="read"
       ref={sectionRef}
-      className="relative overflow-hidden section-pad"
-      style={{ background: '#101426' }}
+      className="relative overflow-hidden section-pad surface-gallery"
     >
       <div className="site-container">
       {/* ── Video subsection ── */}
       <div style={{ marginBottom: 'var(--subsection-gap)' }}>
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          animate={revealed ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center"
-          style={{ fontFamily: 'var(--font-display)', marginBottom: 'var(--heading-to-intro)' }}
-        >
-          {videoSection.heading}
-        </motion.h2>
-        <p className="text-white/50 text-base text-center" style={{ marginBottom: 'var(--intro-to-content)' }}>{videoSection.title}</p>
+        <SectionHeading title={videoSection.heading} intro={videoSection.title} dark />
 
+        <Reveal variant="scale" duration={1.1}>
+        <div className="gilded-frame" style={{ maxWidth: isLandscape ? '960px' : '420px', marginInline: 'auto' }}>
         <div
           style={{
-            maxWidth: isLandscape ? '100%' : '420px',
-            marginInline: 'auto',
             aspectRatio,
           }}
-          className="relative rounded-lg overflow-hidden bg-black/40"
+          className="relative overflow-hidden bg-black"
         >
           {videoError ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
@@ -113,7 +89,6 @@ export default function VideoFlipbookDownload(_props?: Props) {
             </div>
           ) : (
             <>
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               <video
                 ref={videoRef}
                 src={videoSection.videoUrl}
@@ -127,13 +102,14 @@ export default function VideoFlipbookDownload(_props?: Props) {
 
               {!videoStarted && (
                 <div
-                  className="absolute inset-0 bg-black/30 flex items-center justify-center"
+                  className="group absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10 flex items-center justify-center"
                   style={{ transition: 'opacity 0.4s ease', cursor: 'pointer' }}
                   onClick={handlePlay}
                 >
                   <button
                     onClick={(e) => { e.stopPropagation(); handlePlay(); }}
-                    className="w-20 h-20 rounded-full bg-[#E2674A] border-2 border-white/30 flex items-center justify-center text-white hover:bg-[#c9553d] hover:scale-110 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    className="relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-[#1C1712] group-hover:scale-110 transition-transform duration-500 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    style={{ background: 'var(--gold-gradient)', boxShadow: '0 0 0 10px rgba(230,199,127,0.18), 0 0 0 22px rgba(230,199,127,0.08), 0 20px 40px rgba(0,0,0,0.5)' }}
                     aria-label="Play the Behind the Canvas video"
                     type="button"
                   >
@@ -146,17 +122,13 @@ export default function VideoFlipbookDownload(_props?: Props) {
             </>
           )}
         </div>
+        </div>
+        </Reveal>
       </div>
 
       {/* ── Flipbook subsection ── */}
       <div style={{ marginBottom: '80px' }}>
-        <h3
-          className="text-2xl md:text-3xl font-bold text-white text-center"
-          style={{ fontFamily: 'var(--font-display)', marginBottom: 'var(--heading-to-intro)' }}
-        >
-          {flipbookSection.heading}
-        </h3>
-        <p className="text-white/50 text-sm text-center" style={{ marginBottom: '48px' }}>{flipbookSection.tip}</p>
+        <SectionHeading as="h3" size="md" title={flipbookSection.heading} intro={flipbookSection.tip} dark />
 
         {!hasFlipbook || iframeError ? (
           /* Fallback: no URL or explicit error */
@@ -187,10 +159,13 @@ export default function VideoFlipbookDownload(_props?: Props) {
         ) : (
           /* Iframe wrapper — always mounted, spinner behind */
           <div
-            className="relative rounded-lg overflow-hidden"
+            className="relative overflow-hidden"
             style={{
               marginInline: 'auto',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+              maxWidth: 1100,
+              borderRadius: 6,
+              border: '1px solid rgba(230,199,127,0.35)',
+              boxShadow: '0 40px 80px -30px rgba(0,0,0,0.8), 0 0 0 8px rgba(255,248,232,0.03)',
             }}
           >
             {/* Loading spinner — sits behind the iframe, hidden once loaded */}
@@ -246,7 +221,7 @@ export default function VideoFlipbookDownload(_props?: Props) {
               href={flipbookSection.flipbookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-white/50 text-sm hover:text-white/80 transition-colors"
+              className="inline-flex items-center gap-2 text-[#E6C77F]/80 text-sm uppercase tracking-[0.18em] hover:text-[#E6C77F] transition-colors border-b border-[#E6C77F]/30 pb-1"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1" />
@@ -259,17 +234,12 @@ export default function VideoFlipbookDownload(_props?: Props) {
 
       {/* ── Download cards ── */}
       <div>
-        <h3
-          className="text-2xl md:text-3xl font-bold text-white text-center"
-          style={{ fontFamily: 'var(--font-display)', marginBottom: '40px' }}
-        >
-          {downloadSection.heading}
-        </h3>
+        <SectionHeading as="h3" size="md" title={downloadSection.heading} dark />
         <div
           className="grid gap-6"
           style={{
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-            maxWidth: '640px',
+            maxWidth: '680px',
             marginInline: 'auto',
           }}
         >
@@ -280,12 +250,12 @@ export default function VideoFlipbookDownload(_props?: Props) {
                 href={dl.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white/5 border border-white/10 rounded-lg text-center hover:border-white/25 hover:bg-white/[0.07] transition-all group block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                style={{ padding: '32px', textDecoration: 'none' }}
+                className="shimmer relative rounded-md text-center transition-all duration-500 group block hover:-translate-y-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                style={{ padding: '36px 28px', textDecoration: 'none', background: 'linear-gradient(160deg, rgba(255,248,232,0.07), rgba(255,248,232,0.02))', border: '1px solid rgba(230,199,127,0.3)', boxShadow: '0 30px 50px -30px rgba(0,0,0,0.8)' }}
               >
                 <div
-                  className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white/60 group-hover:text-white/80 transition-colors"
-                  style={{ marginInline: 'auto', marginBottom: '16px' }}
+                  className="w-14 h-14 rounded-full flex items-center justify-center text-[#1C1712] transition-transform duration-500 group-hover:translate-y-1"
+                  style={{ marginInline: 'auto', marginBottom: '18px', background: 'var(--gold-gradient)' }}
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -293,9 +263,9 @@ export default function VideoFlipbookDownload(_props?: Props) {
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
                 </div>
-                <h4 className="text-white font-semibold text-lg" style={{ marginBottom: '4px' }}>{dl.label}</h4>
-                <p className="text-white/50 text-sm" style={{ marginBottom: '4px' }}>{dl.description}</p>
-                <p className="text-white/30 text-xs">{dl.fileSize}</p>
+                <h4 className="text-[#FFF8E8] text-2xl italic" style={{ marginBottom: '6px' }}>{dl.label}</h4>
+                <p className="text-white/60 text-sm" style={{ marginBottom: '10px' }}>{dl.description}</p>
+                <p className="inline-block text-[#E6C77F] text-[11px] uppercase tracking-[0.2em] border border-[#E6C77F]/30 rounded-full px-3 py-1">PDF &middot; {dl.fileSize}</p>
               </a>
             ) : (
               <div
